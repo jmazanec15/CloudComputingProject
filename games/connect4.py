@@ -1,14 +1,13 @@
 '''
 	Implemenation of Connect4 game for
 	AlphaGo Zero Project
-	10/12/2018
+	11/12/2018
 '''
 
 import copy
 
 class Connect4(object):
 	def __init__(self):
-		self.turn = 1 # 1 for black -1 for white
 		self.size = 42
 		self.winStates = [
 						  # Horizontal - 28
@@ -41,7 +40,7 @@ class Connect4(object):
 	def startState(self):
 		'''
 			State should be an array of 43 vals where the 
-			first 42 are the squares and the last is the turn
+			first 42 are the squares and the last is the turn (1: black, -1: white)
 
 			Board looks like:
 			 0  1  2  3  4  5  6
@@ -70,6 +69,9 @@ class Connect4(object):
 		return actions
 
 	def nextState(self, s, a):
+		# Returns a copy of the next state instead of modifying current state
+		# I am assuming this will be better for MCTS. However, if there is a way to avoid this
+		# that would probably save a decent amount of memory
 		n = copy.copy(s)
 		
 		if n[a] == 0:
@@ -80,12 +82,17 @@ class Connect4(object):
 		return None
 
 	def gameOver(self, s):
-		# Need to check if someone won or if the board is full
-		l = s[-1]*-1 # Whoever made the last move
+		'''
+			Check if the game is over
+			Return last user to make a move if game is over
+			Return 0 if game is not over
+		'''
+		l = s[-1]*-1 # Player that made the last move
 		for w in self.winStates:
 			if s[w[0]]*l + s[w[1]]*l + s[w[2]]*l + s[w[3]]*l == 4:
 				return l
 
+		# Check if the board is full
 		for i in range(42):
 			if s[i] == 0:
 				return 0
@@ -93,7 +100,7 @@ class Connect4(object):
 		return -l
 
 	def printState(self, s):
-		t = {1: 'B', 0: '0', -1: 'W'}
+		t = {1: 'B', 0: '_', -1: 'W'}
 		for r in range(6):
 			for c in range(7):
 				print t[s[r*7+c]],
