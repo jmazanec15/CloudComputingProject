@@ -13,6 +13,24 @@ def main():
 	nn = NN(input_shape)
 	test_net(nn)
 
+	## Play connect 4
+	game = Connect4()
+	test_game(game)
+
+
+def test_game(game):
+	s = game.startState()
+	while True:
+		a = game.getValidActions(s)
+		s = game.nextState(s, a[0])
+		game.printState(s)
+		print ''
+		t = game.gameOver(s)
+		if t:
+			print "{} wins".format(t)
+			break
+
+	print(s)
 
 def test_net(nn):
 	## Init variables
