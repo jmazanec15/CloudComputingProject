@@ -8,15 +8,50 @@ from neuralNet.nn import NN
 def main():
 	## Intialize variables
 	input_shape = (43,)
+	iterations = 5
+	training_examples = list()s
+	games_per_iter = 100
 
-	## Create neural network
+	head_to_head_games = 100
+	threshold = 0.55
+
+	## Create basic neural network
 	nn = NN(input_shape)
-	test_net(nn)
 
-	## Play connect 4
+	## Initialize the game
 	game = Connect4()
-	test_game(game)
 
+	for it in range(iterations):
+		# Here, we need to:
+		#	1.) Play a bunch of games
+		#	2.) Format each game state in the form of a
+		# 		training example
+		# 	3.) Add them to training examples
+		#	4.) Eventually this should be migrated to use WorkQueue,
+		#		but not until we get it to work
+		for g in range(games_per_iter):
+			examples.extend(playGameVsSelf(game, nn))
+
+		# After we collect enough examples, we need to train a new
+		# Neural network on those examples
+		# Once we get this working, we should look into using AWS to train
+		# distributed (assuming that we cant train using CRC)
+		new_nn = NN(input_shape)
+		#new_nn.train(examples)
+
+		# Finally, new_nn plays nn and the better of the two becomes nn
+		# playGameVsNN
+		wins = 0
+		for g in range(head_to_head_games):
+			wins += playGameVsNN(game, nn, new_nn)
+		if wins/float(head_to_head_games) >= threshold:
+			nn = new_nn 
+
+def playGameVsSelf(game, nn):
+	return []
+
+def playGameVsNN(game, nn1, nn2):
+	return 1
 
 def test_game(game):
 	s = game.startState()
