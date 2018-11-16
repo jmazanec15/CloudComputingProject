@@ -105,3 +105,14 @@ class Connect4(object):
 			for c in range(7):
 				print t[s[r*7+c]],
 			print('')
+
+	def stateToId(self, s):
+		p1_pos = np.zeros(42)
+		p1_pos[s==1] = 1
+
+		p2_pos = np.zeros(42)
+		p2_pos[s==1] = 1
+
+		ps = np.append(p1_pos, p2_pos)
+
+		return ''.join(map(str, ps))
