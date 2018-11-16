@@ -32,11 +32,32 @@ class MCTS(object):
 
 		self.cpuct = cpuct
 
+    def downToLeaf(self):
+        trail = []
+        currentNode = self.root
+
+        while not currentNode.isLeaf():
+            ''' Choose the path based on explored / favorable '''
+
+            maxProb = -1
+            actionToTakeIndex = -1
+            for index, action in enumerate(currentNode.actions):
+                if action.vals['P'] > maxProb:
+                    actionToTakeIndex = index
+            
+            result, value = currentNode.state.takeAction(currentNode.actions[actionToTakeIndex])
+            currentNode = currentNode.actions[actionToTakeIndex]
+            trail.append(currentNode.actions[actionToTakeIndex])
+
+        
+        return currentNode, trail, value
+                    
+
     def backProp(self, leaf, value, trail):
 
 		currentPlayer = leaf.state.playerTurn
 
-		for action in breadcrumbs:
+		for action in trail:
 			playerTurn = action.playerTurn
 			if playerTurn == currentPlayer:
 				direction = 1
