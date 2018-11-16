@@ -3,13 +3,13 @@
 import numpy as np
 
 from games.connect4 import Connect4
-from neuralNet.nn import NN
+from nn import NN
 
 def main():
 	## Intialize variables
 	input_shape = (43,)
 	iterations = 5
-	training_examples = list()s
+	training_examples = list()
 	games_per_iter = 100
 
 	head_to_head_games = 100
@@ -30,17 +30,16 @@ def main():
 		#	4.) Eventually this should be migrated to use WorkQueue,
 		#		but not until we get it to work
 		for g in range(games_per_iter):
-			examples.extend(playGameVsSelf(game, nn))
+			training_examples.extend(playGameVsSelf(game, nn))
 
 		# After we collect enough examples, we need to train a new
 		# Neural network on those examples
 		# Once we get this working, we should look into using AWS to train
 		# distributed (assuming that we cant train using CRC)
 		new_nn = NN(input_shape)
-		#new_nn.train(examples)
+		#new_nn.train(training_examples)
 
 		# Finally, new_nn plays nn and the better of the two becomes nn
-		# playGameVsNN
 		wins = 0
 		for g in range(head_to_head_games):
 			wins += playGameVsNN(game, nn, new_nn)
