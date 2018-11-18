@@ -5,11 +5,12 @@
 '''
 
 import copy
+import numpy as np
 
 class Connect4(object):
 	def __init__(self):
 		self.size = 42
-		self.winStates = [
+		self.win_states = [
 						  # Horizontal - 28
 						  [0,1,2,3],[1,2,3,4],[2,3,4,5],[3,4,5,6],
 						  [7,8,9,10],[8,9,10,11],[9,10,11,12],[10,11,12,13],
@@ -69,11 +70,13 @@ class Connect4(object):
 		return actions
 
 	def nextState(self, s, a):
-		# Returns a copy of the next state instead of modifying current state
-		# I am assuming this will be better for MCTS. However, if there is a way to avoid this
-		# that would probably save a decent amount of memory
+		'''
+			Returns a copy of the next state instead of modifying current state
+			I am assuming this will be better for MCTS. However, if there is a way to avoid this
+			that would probably save a decent amount of memory
+		'''
 		n = copy.copy(s)
-		
+
 		if n[a] == 0:
 			n[a] = n[-1]
 			n[-1] *= -1
@@ -88,7 +91,7 @@ class Connect4(object):
 			Return 0 if game is not over
 		'''
 		l = s[-1]*-1 # Player that made the last move
-		for w in self.winStates:
+		for w in self.win_states:
 			if s[w[0]]*l + s[w[1]]*l + s[w[2]]*l + s[w[3]]*l == 4:
 				return l
 
