@@ -13,54 +13,55 @@ class Node(object):
 		self.edges = list()
 		self.v = None
 
-	def isLeaf(self):
-		if len(self.edges) == 0:
-			return True
-		return False
 
 class Edge(object):
 	def __init__(self, in_state, out_state, a, prob):
 		self.in_state = in_state
 		self.out_state = out_state
 		self.action = a
-		self.turn = in_state.turn
 		self.vals = {'N':0,'W':0,'Q':0,'P':prob}
 
 class MCTS(object):
 	def __init__(self, game, start_state, cpuct, nn):
 		self.game = game
 		self.nn = nn
-		self.end_states = dict()
 		self.cpuct = cpuct
 
-		self.root = Node(start_state)
 		self.tree = dict()
-		self.addNode(self.root)
-		self.root.v = self.initEdges(self.root)
+
+		self.root = Node(start_state)
+		self._addNode(self.root)
+		self.root.v = self._initEdges(self.root)
 
 
-	def getMove(self, iterations=10, state=None):
+	def getMove(self, iterations=10, state=[]):
 		'''
 			For a certain state, get the best potential move
+	
+			If state is passed in, set it as the root of the tree
+			Otherwise, just use the current root of the tree
 		'''
-		str_rep = self.game.stateToId(state)
-		
-		if state and self.tree[str_rep]:
-			self.root = self.tree[str_rep]
-		elif state:
-			self.root = Node(state)
-			self.addNode(self.root)
-			self.root.v = self.initEdges(self.root)
+		if len(state) != 0:
+			str_rep = self.game.stateToId(state)
+		 	if str_rep in self.tree:
+				self.root = self.tree[str_rep]
+			else:
+				self.root = Node(state)
+				self._addNode(self.root)
+				self.root.v = self._initEdges(self.root)
 		else:
+			# add randomness here I believe for self play
 			pass
+
+
 
 		## Run search and update on the tree
 		for i in range(iterations):
-			leaf_node, trail, terminal = self.search()
-			self.update(leaf_node, trail, terminal)
+			leaf_node, trail, max_edge = self._search()
+			self._update(leaf_node, trail, max_edge)
 
 
-		## Get the best action from the tree policy
+		## Get the best action from the tree policy - no neural net used
 		max_pi = -float('inf')
 		max_edge = None
 
@@ -73,70 +74,75 @@ class MCTS(object):
 				max_pi = pi
 				max_edge = edge		
 
-		return max_edge.a
+		return max_edge.action
 
-	def search(self):
+	def _search(self):
 		''' 
-			Find the leaf along the path that maximizes U
+			Find the leaf along the path that maximizes U and the max_edge
 	
 			return that node, the trail to get there and whether that
 			node is a terminal state
     	'''
 		trail = list()
-		curr_node = self.root
-		str_rep = self.game.stateToId(curr_node.state)
+		str_rep = self.game.stateToId(self.root.state)
 
-		while not curr_node.isLeaf():
+		## While the node is in the tree, continue
+		# This loop will always be entered
+		while str_rep in self.tree:
+			curr_node = self.tree[str_rep]
 			max_edge = self._maxEdge(curr_node)
+
+			# If max_edge is None, the game must be over
+			if not max_edge:
+				return curr_node, trail, None
+
 			trail.append(max_edge)
-			str_rep = self.game.stateTostr(max_edge.out_state)
-			curr_node = self.tree[str_rep] # go to next node
+			str_rep = self.game.stateToId(max_edge.out_state)
 
-		## Bookkeeping about endstates
-		if str_rep in self.end_states:
-			terminal = self.end_states[str_rep]
-		else:
-			terminal = self.game.gameOver(curr_node.state)
-			self.end_states[str_rep] = terminal
-
-		return curr_node, trail, terminal
+		return curr_node, trail, max_edge
 
 
-	def update(self, leaf_node, trail, terminal):
+	def _update(self, leaf_node, trail, max_edge):
 		'''
 			Given a leaf node, update each edge in trail
 
 			If terminal, use that value as the v needed to update the edges
 			Otherwise, create a new node, and use the NN to get v and p
 		'''
-		if terminal:
-			v = terminal
+		if not max_edge:
+			v = leaf_node.v
 		else:
-			max_edge = self._maxEdge(leaf_node)
+			# print("++++++++++++++++")
+			# self.game.printState(max_edge.in_state)
+			# print("\n")
+			# self.game.printState(max_edge.out_state)
+			# print("++++++++++++++++")
 			new_node = Node(max_edge.out_state)
+			self._addNode(new_node)
+			new_node.v = self._initEdges(new_node)
+			v = new_node.v
 
 		## Back fill v through the trail
 		for edge in trail:
-			sign = edge.turn * leaf.turn
 			edge.vals['N'] += 1
-			edge.vals['W'] += v * sign
+			edge.vals['W'] += v * (edge.in_state[-1] * leaf_node.state[-1])
 			edge.vals['Q'] = edge.vals['W'] / edge.vals['N']
 
 
-	def initEdges(self, node):
+	def _initEdges(self, node):
 		'''
 			Initialize all edges for a given node and return the 
 			value predicted by the neural network for that node
 		'''
 		actions = self.game.getValidActions(node.state)
-		
-		v, p = self.nn.predict(node.state)
+		data = np.array([node.state])
+		p, v = self.nn.predict(data)
 
 		for a in actions:
 			outState = self.game.nextState(node.state, a)
-			node.edges.append(Edge(node.state, outState, a, p[a]))
+			node.edges.append(Edge(node.state, outState, a, p[0][a]))
 
-		return v
+		return v[0]
 
 
 	def _maxEdge(self, node, randomness=None):
@@ -159,9 +165,8 @@ class MCTS(object):
 		return max_edge
 
 
-	def addNode(self, node):
+	def _addNode(self, node):
 		''' 
 			Add node to the tree for later lookup 
 		'''
 		self.tree[self.game.stateToId(node.state)] = node
-
