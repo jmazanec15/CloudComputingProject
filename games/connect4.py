@@ -52,11 +52,18 @@ class Connect4(object):
 			35 36 37 38 39 40 41
 
 		'''
-		state = [0 for _ in range(self.size + 1)]
+		state = np.array([0 for _ in range(self.size + 1)])
 		state[self.size] = 1 # set turn to 1: black
 		return state
 
 	def getValidActions(self, s):
+		'''
+			Returns a list of actions the current player can
+			play. It returns an empty list if the game is over
+		'''
+		if self.gameOver(s):
+			return list()
+
 		actions = list()
 		rows = 6
 		cols = 7
@@ -82,6 +89,7 @@ class Connect4(object):
 			n[-1] *= -1
 			return n
 
+		print("INVALID MOVE")
 		return None
 
 	def gameOver(self, s):
@@ -110,12 +118,14 @@ class Connect4(object):
 			print('')
 
 	def stateToId(self, s):
-		p1_pos = np.zeros(42)
-		p1_pos[s==1] = 1
+		s_id = ""
 
-		p2_pos = np.zeros(42)
-		p2_pos[s==1] = 1
+		for v in s:
+			if v == 1:
+				s_id += 'b'
+			elif v == -1:
+				s_id += 'w'
+			else:
+				s_id += '0'
 
-		ps = np.append(p1_pos, p2_pos)
-
-		return ''.join(map(str, ps))
+		return s_id
