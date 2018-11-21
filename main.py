@@ -26,7 +26,7 @@ def main():
 	## Initialize the game
 	game = Connect4()
 
-	examples = playGameVsSelf(game, nn, cpuct)
+	examples = playGameSelfVsSelf(game, nn, cpuct)
 
 	# for it in range(iterations):
 	# 	# Here, we need to:
@@ -53,13 +53,28 @@ def main():
 		# if wins/float(head_to_head_games) >= threshold:
 		# 	nn = new_nn 
 
-def playGameVsSelf(game, nn, cpuct, first=True):
+def playGameHumanVsComp(game, nn, cpuct, first=True):
 	if first:
 		a1 = ComputerAgent(game, cpuct, nn)
 		a2 = HumanAgent(game)
 	else:
 		a1 = HumanAgent(game)
 		a2 = ComputerAgent(game, cpuct, nn)
+
+	return playGame(game, a1, a2)
+
+def playGameSelfVsSelf(game, nn, cpuct, first=True):
+	a1 = ComputerAgent(game, cpuct, nn)
+	a2 = ComputerAgent(game, cpuct, nn)
+	return playGame(game, a1, a2)
+
+def playGameNN1VsNN2(game, nn1, nn2, cpuct, first=True):
+	if first:
+		a1 = ComputerAgent(game, cpuct, nn1)
+		a2 = ComputerAgent(game, cpuct, nn2)
+	else:
+		a1 = ComputerAgent(game, cpuct, nn2)
+		a2 = ComputerAgent(game, cpuct, nn1)
 
 	return playGame(game, a1, a2)
 
@@ -78,9 +93,13 @@ def playGame(game, a1, a2):
 		else:
 			a = a2.getMove(s)
 			a1_turn = True
+
+		print('\n**************')
+		if a == None:
+			break
 		s = game.nextState(s, a)
 		winner = game.gameOver(s)
-
+		
 	game.printState(s)
 	print("Winner: {}".format(winner))
 
@@ -98,6 +117,7 @@ def test_game(game):
 			break
 
 	print(s)
+
 
 def test_net(nn):
 	## Init variables
