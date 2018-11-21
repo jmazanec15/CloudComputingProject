@@ -23,15 +23,20 @@ class ComputerAgent(Agent):
 		self.mcts = MCTS(game, game.startState(), cpuct, nn)
 
 
-	def getMove(self, s):
+	def getMove(self, s, get_policy=False):
 		valid_moves = self.game.getValidActions(s)
-		a = self.mcts.getMove(state=s)
-		print(valid_moves)
-		print(a)
-		if a in valid_moves:
-			return a
+		if get_policy:
+			a, p = self.mcts.getMove(state=s, get_policy=get_policy)
+			if a in valid_moves:
+				return a, p
+			return None, None
+		else:
+			a = self.mcts.getMove(state=s)
+			if a in valid_moves:
+				return a			
+			return None
 
-		return None
+		
 
 
 class HumanAgent(Agent):
@@ -43,7 +48,6 @@ class HumanAgent(Agent):
 
 	def getMove(self, s):
 		valid_moves = self.game.getValidActions(s)
-		print(valid_moves)
 		while 1:
 			try:
 				a = raw_input('Make a move: ')

@@ -34,7 +34,7 @@ class MCTS(object):
 		self.root.v = self._initEdges(self.root)
 
 
-	def getMove(self, iterations=10, state=[]):
+	def getMove(self, iterations=10, state=[], get_policy=False):
 		'''
 			For a certain state, get the best potential move
 	
@@ -67,12 +67,19 @@ class MCTS(object):
 
 		Nall = float(sum([e.vals['N'] for e in self.root.edges]))
 
+		policies = np.zeros(42)
+
 		for edge in self.root.edges:
 			pi = edge.vals['N'] / (Nall+1)
+
+			policies[edge.action] = pi
 
 			if pi > max_pi:
 				max_pi = pi
 				max_edge = edge		
+
+		if get_policy:
+			return max_edge.action, policies
 
 		return max_edge.action
 
