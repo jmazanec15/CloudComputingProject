@@ -9,7 +9,7 @@ class Agent(object):
 
 	def getMove(self, s):
 		''' 
-			Abstract class, must return a valid action
+			Abstract method, must return a valid action
 		'''
 		pass
 
@@ -22,12 +22,16 @@ class ComputerAgent(Agent):
 		super(ComputerAgent, self).__init__(game)
 		self.mcts = MCTS(game, game.startState(), cpuct, nn)
 
+
 	def getMove(self, s):
 		valid_moves = self.game.getValidActions(s)
 		a = self.mcts.getMove(state=s)
-		if a not in valid_moves:
-			return None
-		return a
+		print(valid_moves)
+		print(a)
+		if a in valid_moves:
+			return a
+
+		return None
 
 
 class HumanAgent(Agent):
@@ -39,16 +43,17 @@ class HumanAgent(Agent):
 
 	def getMove(self, s):
 		valid_moves = self.game.getValidActions(s)
+		print(valid_moves)
 		while 1:
-
 			try:
-				a = int(raw_input('Make a move: '))
+				a = raw_input('Make a move: ')
+				if a == 'q':
+					return None
+				a = int(a)
 			except:
-				continue	
-		
+				continue
+
 			if a in valid_moves:
 				return a
-			print("Invalid; try again")
-
-
+			return None
 		
