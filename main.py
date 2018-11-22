@@ -11,39 +11,27 @@ def main():
 		This function should generate a trained model that will allow us
 		to play the games
 	'''
+	### Parameters
 	input_shape = (43,)
 	iterations = 10
 	games_per_iter = 25
-
 	head_to_head_games = 100
 	threshold = 0.55
 	cpuct = 1
-
 	epochs = 10
 	batch_size = 64
 
-	## Create basic neural network
+	### Setup variables
 	nn = NN(input_shape)
-
-	## Initialize the game
 	game = Connect4()
-
-	# training_examples = np.array([])
-	# policies = np.array([])
-	# values = np.array([])
-
 	training_examples = list()
 	policies = list()
 	values = list()
 
 	for it in range(iterations):
-		#	1.) Play a bunch of games
-		#	2.) Format each game state in the form of a
-		# 		training example
-		# 	3.) Add them to training examples
-		#	4.) Eventually this should be migrated to use WorkQueue,
-		#		but not until we get it to work
 		print("ITERATION: {}/{}".format(it+1, iterations))
+		
+		### Self playing to accumulate training examples
 		print("Self playing {} games".format(games_per_iter))
 		for g in range(games_per_iter):
 			new_examples, ps, vs = playGameSelfVsSelf(game, nn, cpuct)
@@ -56,15 +44,12 @@ def main():
 				policies = ps
 				values = vs
 
-		# After we collect enough examples, we need to train a new
-		# Neural network on those examples
-		# Once we get this working, we should look into using AWS to train
-		# distributed (assuming that we cant train using CRC)
+		### Train new neural net with random assortment of new examples
 		print("Training...")
 		new_nn = NN(input_shape)
 		new_nn.fit(training_examples, [policies, values], epochs, batch_size)
 
-		## Finally, new_nn plays nn and the better of the two becomes nn
+		### Have the nets play each other and the best one survives
 		print("Head to head...")
 		wins = 0
 		for g in range(head_to_head_games):
