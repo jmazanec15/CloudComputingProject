@@ -12,19 +12,20 @@ def main():
 		to play the games
 	'''
 	### Parameters
-	input_shape = (43,)
+	input_shape = (6, 7, 1)
 	iterations = 10
-	games_per_iter = 25
-	head_to_head_games = 100
+	games_per_iter = 100
+	head_to_head_games = 50
 	threshold = 0.55
 	cpuct = 1
 	epochs = 10
 	batch_size = 64
+	training_size = 10000
 
 	### Setup variables
 	nn = NN(input_shape)
 	game = Connect4()
-	training_examples = list()
+	training_examples = np.array([])
 	policies = list()
 	values = list()
 
@@ -36,18 +37,28 @@ def main():
 		for g in range(games_per_iter):
 			new_examples, ps, vs = playGameSelfVsSelf(game, nn, cpuct)
 			if len(training_examples) != 0:
-				np.append(training_examples, new_examples)
-				np.append(policies, ps)
-				np.append(values, vs)
+				training_examples = np.append(training_examples, new_examples, axis=0)
+				policies = np.append(policies, ps, axis=0)
+				values = np.append(values, vs, axis=0)
 			else:	
 				training_examples = new_examples
 				policies = ps
 				values = vs
 
+
 		### Train new neural net with random assortment of new examples
 		print("Training...")
 		new_nn = NN(input_shape)
-		new_nn.fit(training_examples, [policies, values], epochs, batch_size)
+
+		### Take random subset of the data for training
+		size = min(len(training_examples), training_size)
+		indices = np.random.choice(range(len(training_examples)), size=size, replace=False)
+		ex_subset = training_examples[indices,:]
+		p_subset = policies[indices]
+		v_subset = values[indices]
+
+		### Train the new neural network
+		new_nn.fit(ex_subset, [p_subset, v_subset], epochs, batch_size)
 
 		### Have the nets play each other and the best one survives
 		print("Head to head...")
@@ -60,6 +71,9 @@ def main():
 			nn = new_nn 
 
 	playGameHumanVsComp(game, nn, cpuct)
+
+	nn.save('./models/v1.h5')
+
 
 def playGameHumanVsComp(game, nn, cpuct, first=True):
 	if first:
@@ -148,6 +162,8 @@ def playGame(game, a1, a2, output=True):
 	if output:
 		game.printState(s)
 		print("Winner: {}".format(winner))
+
+	return winner
 
 def test_game(game):
 	s = game.startState()
