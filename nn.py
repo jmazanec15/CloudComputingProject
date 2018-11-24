@@ -1,5 +1,9 @@
 from keras.models import Model
 from keras.layers import *
+from keras.optimizers import SGD
+from keras import regularizers
+
+from params import params
 
 class NN(object):
 	'''
@@ -17,7 +21,7 @@ class NN(object):
 			on top of each and then split off into the policy_head and the
 			value_head
 		'''
-		inputs = Input(shape=self.input_shape, dtype='int32', name='main_input')
+		inputs = Input(shape=self.input_shape, name='main_input')
 
 		## Base of the model before split
 		base = self.model_base(inputs)
@@ -27,25 +31,34 @@ class NN(object):
 		value_head = self.value_head(base)
 
 		model = Model(inputs=inputs, outputs=[policy_head, value_head])
-		model.compile(optimizer='rmsprop', loss=['categorical_crossentropy', 'binary_crossentropy'], metrics=['accuracy'])
+		model.compile(
+					optimizer=SGD(lr=params['learning_rate'], momentum=params['momentum']), 
+					loss={'value_head': 'mean_squared_error', 'policy_head': 'categorical_crossentropy'},
+					loss_weights={'value_head': 0.5, 'policy_head': 0.5}
+					)
 
 		return model
 
 
 	def fit(self, data, labels, epochs, batch_size):
+		data = np.array([d[:-1].reshape(self.input_shape) for d in data])
 		self.model.fit(data, labels, epochs=epochs, batch_size=batch_size)
 
 	def evaluate(self, x, y, batch_size):
-		return self.model.evaluate(x, y, batch_size=batch_size)
+		data = np.array([d[:-1].reshape(self.input_shape) for d in x])
+		return self.model.evaluate(data, y, batch_size=batch_size)
 
 	def predict(self, data):
-		return self.model.predict(data)
+		shape = np.insert(self.input_shape, 0, 1)
+		return self.model.predict(data[:-1].reshape(shape))
 
 	def model_base(self, inputs):
-		x = LeakyReLU()(inputs)
-		x = Dense(64, activation='relu')(x)
-		x = Dense(64, activation='relu')(x)
-		x = Dense(64, activation='relu')(x)
+		x = self.conv_layer(inputs, params['base_layers'][0]['filters'], params['base_layers'][0]['kernel_size'])
+
+		for i in range(1,len(params['base_layers']) - 1):
+			x = self.res_layer(x, params['base_layers'][i]['filters'], 
+								params['base_layers'][i]['kernel_size'])
+
 		return x
 
 	def policy_head(self, x):
@@ -53,26 +66,84 @@ class NN(object):
 			This head will create a probability vector of all of the
 			moves
 		'''
-		## Questions to answer
-		#	1.) If there are a fixed number of outputs, what happens to invalid moves
-		#			-> I am guessing they just go to 0
+		p = self.conv_layer(x, 2, 1)
+		p = Flatten()(p)
+		p = Dense(
+					42, 
+					use_bias=False, 
+					activation='linear', 
+					kernel_regularizer=regularizers.l2(params['reg_const']),
+					name='policy_head'
+					)(p)
 
-		p = Dense(64, activation='relu')(x)
-		p = Dense(64, activation='relu')(p)
-		p = Dense(64, activation='relu')(p)
-		policy_head = Dense(42, activation='softmax')(p)
-		return policy_head
+		return p
 
 	def value_head(self, x):
 		'''
 			This head will have 1 output node of how favorable the board is for the user
 			between -1 and 1
 		'''
-		v = Dense(64, activation='relu')(x)
-		v = Dense(64, activation='relu')(v)
-		v = Dense(64, activation='relu')(v)
-		value_head = Dense(1, activation='softmax')(v)
-		return value_head
+		v = self.conv_layer(x, 1, 1)
+		v = Flatten()(v)
+		v = Dense(
+					20, 
+					use_bias=False, 
+					activation='linear', 
+					kernel_regularizer=regularizers.l2(params['reg_const'])
+					)(v)
+		v = LeakyReLU()(v)
+		v = Dense(
+					1, 
+					use_bias=False, 
+					activation='tanh', 
+					kernel_regularizer=regularizers.l2(params['reg_const']),
+					name='value_head'
+					)(v)
+
+		return v
+
+
+	def res_layer(self, x, filters, kernel_size):
+		model = self.conv_layer(x, filters, kernel_size)
+
+		model = Conv2D(
+			filters=filters, # integer, "dimensionality of the output space"
+			kernel_size=kernel_size, # integer or tuple/list of 2 ints,height and width of window
+			padding='same',
+			data_format='channels_first',
+			use_bias='False',
+			activation='linear',
+			kernel_regularizer=regularizers.l2(params['reg_const']),
+			)(model)
+
+		model = BatchNormalization(axis=1)(model)
+		model = add([model, x])
+		model = LeakyReLU()(model)
+
+		return model
+
+
+	def conv_layer(self, x, filters, kernel_size):
+		x = Conv2D(
+			filters=filters, # integer, "dimensionality of the output space"
+			kernel_size=kernel_size, # integer or tuple/list of 2 ints,height and width of window
+			padding='same',
+			data_format='channels_first',
+			use_bias='False',
+			activation='linear',
+			kernel_regularizer=regularizers.l2(params['reg_const']),
+			)(x)
+
+		x = BatchNormalization(axis=1)(x)
+		x = LeakyReLU()(x)
+
+		return x
+
+	def load_model(self, path):
+		self.model = keras.models.load_model(path)
+
+	def save_model(self, path):
+		self.model.save(path)
 
 
 		
