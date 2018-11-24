@@ -1,5 +1,5 @@
 import numpy as np
-
+from params import params
 '''
 	Monte Carlo Tree Search class
 	This class is used to execute the MCTS when searching
@@ -49,11 +49,6 @@ class MCTS(object):
 				self.root = Node(state)
 				self._addNode(self.root)
 				self.root.v = self._initEdges(self.root)
-		else:
-			# add randomness here I believe for self play
-			pass
-
-
 
 		## Run search and update on the tree
 		for i in range(iterations):
@@ -92,12 +87,15 @@ class MCTS(object):
     	'''
 		trail = list()
 		str_rep = self.game.stateToId(self.root.state)
-
+		root_rep = str_rep
 		## While the node is in the tree, continue
 		# This loop will always be entered
 		while str_rep in self.tree:
 			curr_node = self.tree[str_rep]
-			max_edge = self._maxEdge(curr_node)
+			if str_rep == root_rep:
+				max_edge = self._maxEdge(curr_node, randomness=True)
+			else:
+				max_edge = self._maxEdge(curr_node)
 
 			# If max_edge is None, the game must be over
 			if not max_edge:
@@ -142,7 +140,7 @@ class MCTS(object):
 			value predicted by the neural network for that node
 		'''
 		actions = self.game.getValidActions(node.state)
-		data = np.array([node.state])
+		data = np.array(node.state)
 		p, v = self.nn.predict(data)
 
 		for a in actions:
@@ -158,12 +156,22 @@ class MCTS(object):
 		
 			U(s, a) = Q(s, a) + cpuct * P(s, a) * sqrt((sum of all N)/(1 + N(s,a)))s
 		'''
-		# TODO: add optional randomness
+
+		# Add randomness here so that an NN playing against it self doesnt generate the 
+		# same states
+		if randomness:
+			epsilon = params['epsilon']
+			nu = np.random.dirichlet([params['alpha']] * len(node.edges)) 
+		else:
+			epsilon = 0
+			nu = [0] * len(node.edges)
+
 		max_edge = None
 		max_U = -float('inf')
 		Nall = sum([e.vals['N'] for e in node.edges])
-		for edge in node.edges:
-			U = edge.vals['Q'] + self.cpuct * edge.vals['P'] * np.sqrt(Nall)/(1+edge.vals['N'])
+		for i, edge in enumerate(node.edges):
+			
+			U = edge.vals['Q'] + self.cpuct * ((1-epsilon) * edge.vals['P'] + epsilon * nu[i])* np.sqrt(Nall)/(1+edge.vals['N'])
 
 			if U > max_U:
 				max_U = U
