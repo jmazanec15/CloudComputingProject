@@ -72,7 +72,7 @@ def main():
 
 	playGameHumanVsComp(game, nn, cpuct)
 
-	nn.save('./models/v1.h5')
+	nn.save_model('./models/v1.h5')
 
 
 def playGameHumanVsComp(game, nn, cpuct, first=True):
