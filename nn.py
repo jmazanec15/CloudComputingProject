@@ -1,4 +1,4 @@
-from keras.models import Model
+from keras.models import Model, load_model
 from keras.layers import *
 from keras.optimizers import SGD
 from keras import regularizers
@@ -140,7 +140,7 @@ class NN(object):
 		return x
 
 	def load_model(self, path):
-		self.model = keras.models.load_model(path)
+		self.model = load_model(path)
 
 	def save_model(self, path):
 		self.model.save(path)
