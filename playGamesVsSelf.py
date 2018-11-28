@@ -9,38 +9,56 @@ if __name__ == '__main__':
     numGames = int(sys.argv[2])
 
     # Load nn form path
-    nn = NN(None, pathToNN, load=True)
+    nn = NN((6, 7, 1), pathToNN, load=True)
     cpuct = 1
 
-    a1 = ComputerAgent(game, cpuct, nn)
-    a2 = ComputerAgent(game, cpuct, nn)
     game = Connect4()
 
-    # Play the games
-    s = game.startState()
+    training_examples = np.array([])
+    policies = list()
+    values = list()
 
-    examples = list()
-    ps = list()
-    vs = list()
+    for i in range(numGames):
+        a1 = ComputerAgent(game, cpuct, nn)
+        a2 = ComputerAgent(game, cpuct, nn)
 
-    a1_turn = True
-    winner = game.gameOver(s)
+        # Play the games
+        s = game.startState()
 
-    while not winner:
-        if a1_turn:
-            a, p = a1.getMove(s, get_policy=True)
-            a1_turn = False
-        else:
-            a, p = a2.getMove(s, get_policy=True)
-            a1_turn = True
+        examples = list()
+        ps = list()
+        vs = list()
 
-        examples.append(s)
-        ps.append(p)
-
-        s = game.nextState(s, a)
+        a1_turn = True
         winner = game.gameOver(s)
 
-    for _ in ps:
-        vs.append(winner)
+        while not winner:
+            if a1_turn:
+                a, p = a1.getMove(s, get_policy=True)
+                a1_turn = False
+            else:
+                a, p = a2.getMove(s, get_policy=True)
+                a1_turn = True
 
-    return np.array(examples), np.array(ps), np.array(vs)
+            examples.append(s)
+            ps.append(p)
+
+            s = game.nextState(s, a)
+            winner = game.gameOver(s)
+
+        for _ in ps:
+            vs.append(winner)
+
+        if len(training_examples) != 0:
+            training_examples = np.append(
+                training_examples, examples, axis=0)
+            policies = np.append(policies, ps, axis=0)
+            values = np.append(values, vs, axis=0)
+        else:
+            training_examples = examples
+            policies = ps
+            values = vs
+
+    print(np.array(training_examples), np.array(policies), np.array(values))
+
+    sys.exit(0)
