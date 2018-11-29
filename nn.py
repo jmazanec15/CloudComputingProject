@@ -10,12 +10,13 @@ class NN(object):
 		The architecture of the model is based off of the model used in this link:
 		https://github.com/AppliedDataSciencePartners/DeepReinforcementLearning/blob/master/model.py
 	'''
-	def __init__(self, input_shape, path_to_nn=None, load=False):
+	def __init__(self, input_shape, path_to_nn=None, load=True):
 		self.input_shape = input_shape
 		if load:
-			self.model = self.create_model()
+			self.load_model(path_to_nn)			
 		else:
-			self.load_model(path_to_nn)
+			self.model = self.create_model()
+			
 
 	def create_model(self):
 		'''
@@ -36,7 +37,7 @@ class NN(object):
 		model = Model(inputs=inputs, outputs=[policy_head, value_head])
 		model.compile(
 					optimizer=SGD(lr=params['learning_rate'], momentum=params['momentum']), 
-					loss={'value_head': 'mean_squared_error', 'policy_head': 'categorical_crossentropy'},
+					loss={'value_head': 'mean_squared_logarithmic_error', 'policy_head': 'categorical_crossentropy'},
 					loss_weights={'value_head': 0.5, 'policy_head': 0.5}
 					)
 

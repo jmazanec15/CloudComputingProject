@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from games.connect4 import Connect4
+from connect4 import Connect4
 from nn import NN
 from agent import ComputerAgent, HumanAgent
 
@@ -24,6 +24,7 @@ def main():
 
 	### Setup variables
 	nn = NN(input_shape)
+	nn.save_model('./models/v1.h5')
 	game = Connect4()
 	training_examples = np.array([])
 	policies = list()
@@ -70,7 +71,7 @@ def main():
 		if wins/float(head_to_head_games) >= threshold:
 			nn = new_nn 
 
-	playGameHumanVsComp(game, nn, cpuct)
+	#playGameHumanVsComp(game, nn, cpuct)
 
 	nn.save_model('./models/v1.h5')
 

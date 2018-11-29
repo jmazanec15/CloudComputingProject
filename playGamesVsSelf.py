@@ -1,6 +1,6 @@
 from nn import NN
 from agent import ComputerAgent, HumanAgent
-from games.connect4 import Connect4
+from connect4 import Connect4
 import sys
 import numpy as np
 
