@@ -1,7 +1,6 @@
-import boto3
 from nn import NN
 from agent import ComputerAgent, HumanAgent
-from connect4 import Connect4
+from games.connect4 import Connect4
 import sys
 import numpy as np
 
@@ -11,7 +10,8 @@ if __name__ == '__main__':
     workerNum = sys.argv[3]
 
     # Load nn form path
-    nn = NN((6, 7, 1), pathToNN, load=True)
+    # nn = NN((6, 7, 1), pathToNN, load=True)
+    nn = NN((6, 7, 1))
     cpuct = 1
 
     game = Connect4()
@@ -68,12 +68,5 @@ if __name__ == '__main__':
     np.save("training_examples" + workerNum, training_examples)
     np.save("policies" + workerNum, policies)
     np.save("values" + workerNum, values)
-
-    # Upload files to S3
-    bucket_name = 'cloud-computing-alpha-zero-bucket'
-    s3 = boto3.client('s3')
-    s3.upload_file('training_examples' + workerNum + '.npy', bucket_name, 'training_examples_' + workerNum)
-    s3.upload_file('policies' + workerNum + '.npy', bucket_name, 'policies_' + workerNum)
-    s3.upload_file('values' + workerNum + '.npy', bucket_name, 'values_' + workerNum)
 
     sys.exit(0)
