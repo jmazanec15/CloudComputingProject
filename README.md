@@ -1,5 +1,5 @@
 # CloudComputingProject
-Final Project for Cloud Computing. It will use AWS and other frameworks to train an AlphaZero model to play connect4.
+Final Project for Cloud Computing. This is a simple model implementation of AlphaZero. It uses HTCondor to parallelize the process of the neural net playing games vs itself.
 
 To run:
 - Make sure you are runnning this on machine `crcfe02.crc.nd.edu`
