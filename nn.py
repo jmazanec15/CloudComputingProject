@@ -10,7 +10,7 @@ class NN(object):
 		The architecture of the model is based off of the model used in this link:
 		https://github.com/AppliedDataSciencePartners/DeepReinforcementLearning/blob/master/model.py
 	'''
-	def __init__(self, input_shape, path_to_nn=None, load=True):
+	def __init__(self, input_shape, path_to_nn=None, load=False):
 		self.input_shape = input_shape
 		if load:
 			self.load_model(path_to_nn)			

@@ -1,0 +1,4 @@
+export PATH=/afs/crc.nd.edu/user/c/condor/software/bin:$PATH
+export PATH=/afs/crc.nd.edu/user/c/condor/software/sbin:$PATH
+export PATH=${PATH}:${HOME}/cctools/bin
+export PYTHONPATH=${PYTHONPATH}:${HOME}/cctools/lib/python2.7/site-packages
