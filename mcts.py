@@ -9,7 +9,6 @@ from params import *
 class Node(object):
 	def __init__(self, s):
 		self.state = s
-		self.turn = s[-1] # last value in the state is the turn of the player
 		self.edges = list()
 		self.v = None
 
@@ -140,7 +139,7 @@ class MCTS(object):
 			value predicted by the neural network for that node
 		'''
 		actions = self.game.getValidActions(node.state)
-		data = np.array(node.state)
+		data = np.array([self.game.convertStateForNN(node.state)])
 		p, v = self.nn.predict(data)
 
 		for a in actions:

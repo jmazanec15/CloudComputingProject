@@ -49,18 +49,15 @@ class NN(object):
 
 
 	def fit(self, data, labels, epochs, batch_size):
-		data = np.array([d[:-1].reshape(self.input_shape) for d in data])
 		self.model.fit(data, labels, epochs=epochs, batch_size=batch_size)
 
 
-	def evaluate(self, x, y, batch_size):
-		data = np.array([d[:-1].reshape(self.input_shape) for d in x])
+	def evaluate(self, data, y, batch_size):
 		return self.model.evaluate(data, y, batch_size=batch_size)
 
 
 	def predict(self, data):
-		shape = np.insert(self.input_shape, 0, 1)
-		return self.model.predict(data[:-1].reshape(shape))
+		return self.model.predict(data)
 
 
 	def model_base(self, inputs):

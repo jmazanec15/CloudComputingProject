@@ -166,7 +166,7 @@ def playGameSim(game, a1, a2):
 			a, p = a2.getMove(s, get_policy=True)
 			a1_turn = True
 
-		examples.append(s)
+		examples.append(game.convertStateForNN(s))
 		ps.append(p)
 
 		s = game.nextState(s, a)

@@ -53,8 +53,9 @@ class Connect4(object):
 			35 36 37 38 39 40 41
 
 		'''
-		state = np.zeros(INPUT_SHAPE)
-		return state, 1
+		state = np.zeros(43, int)
+		state[self.size] = 1 # set turn to 1: black
+		return state
 
 	def getValidActions(self, s):
 		'''
@@ -129,4 +130,25 @@ class Connect4(object):
 				s_id += '0'
 
 		return s_id
+
+	def convertStateForNN(self, s):
+		new_state = np.zeros(INPUT_SHAPE)
+		if s[-1] == 1:
+			b = 0
+			w = 1
+			
+		else:
+			b = 1
+			w = 0
+
+		# 1's go in the first, -1 in the second
+		for i, v in enumerate(s[:-1]):
+			if v == 1:
+				new_state[i/7][i - (i/7)*7][b] = 1
+			elif v == -1:
+				new_state[i/7][i - (i/7)*7][w] = 1
+
+		return new_state
+				
+
 
