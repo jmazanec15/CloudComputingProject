@@ -41,12 +41,19 @@ def main():
 		## Self play section
 		ti = time.time() # Take the time to play X games
 		if use_condor:
-			new_examples, ps, vs = selfPlayCondor(game, best_nn, CPUCT, GAMES_PER_ITERATION, GAMES_PER_TASK, MAX_SIZE_OF_DATASET)
+			new_examples, ps, vs = selfPlayCondor(game, best_nn, CPUCT, GAMES_PER_ITERATION, GAMES_PER_TASK)
 		else:
-			new_examples, ps, vs = selfPlaySingle(game, best_nn, CPUCT, GAMES_PER_ITERATION, MAX_SIZE_OF_DATASET)
+			new_examples, ps, vs = selfPlaySingle(game, best_nn, CPUCT, GAMES_PER_ITERATION)
 
 		tf = time.time() # Record time
 		result_file.write('{}\n'.format(tf-ti))
+
+		# Dont let np array get bigger than max_size_of_dataset
+		if len(training_examples) + len(new_examples) > MAX_SIZE_OF_DATASET:
+			r = len(training_examples) + len(new_examples) - MAX_SIZE_OF_DATASET
+			training_examples = training_examples[r:]
+			policies = policies[r:]
+			values = values[r:]
 
 		if len(training_examples) != 0:
 			training_examples = np.append(training_examples, new_examples, axis=0)
@@ -75,11 +82,13 @@ def main():
 		
 		if wins/float(H2H_GAMES) >= NET_THRESHOLD:
 			best_nn = curr_nn
+			best_nn.save_model('./models/{}_games_per_iter_{}_workers_{}_games_per_task.h5'.format(GAMES_PER_ITERATION, WORKERS, GAMES_PER_TASK))
+
 
 	## Save the best model
 	best_nn.save_model('./models/{}_games_per_iter_{}_workers_{}_games_per_task.h5'.format(GAMES_PER_ITERATION, WORKERS, GAMES_PER_TASK))
 
-def selfPlaySingle(game, best_nn, cpuct, games_per_iteration, max_size_of_dataset):
+def selfPlaySingle(game, best_nn, cpuct, games_per_iteration):
 	training_examples = np.array([])
 	policies = np.array([])
 	values = np.array([])
@@ -95,7 +104,7 @@ def selfPlaySingle(game, best_nn, cpuct, games_per_iteration, max_size_of_datase
 			values = vs
 	return training_examples, policies, values
 
-def selfPlayCondor(game, best_nn, cpuct, games_per_iteration, games_per_task, max_size_of_dataset):
+def selfPlayCondor(game, best_nn, cpuct, games_per_iteration, games_per_task):
 	training_examples = np.array([])
 	policies = np.array([])
 	values = np.array([])
@@ -110,11 +119,6 @@ def selfPlayCondor(game, best_nn, cpuct, games_per_iteration, games_per_task, ma
 		new_examples = np.load(train_file)
 		ps = np.load(policies_file)
 		vs = np.load(values_file)
-
-		# Dont let np array get bigger than max_size_of_dataset
-		if len(training_examples) + len(new_examples) > max_size_of_dataset:
-			r = len(training_examples) + len(new_examples) - max_size_of_dataset
-			training_examples = training_examples[r:]
 
 		if len(training_examples) != 0:
 			training_examples = np.append(training_examples, new_examples, axis=0)
