@@ -1,9 +1,13 @@
+import os
+os.environ["CUDA_VISIBLE_DEVICES"]="-1"
+os.environ['KERAS_BACKEND'] = 'tensorflow'
+
 from keras.models import Model, load_model
 from keras.layers import *
 from keras.optimizers import SGD
 from keras import regularizers
 
-from params import params
+from params import *
 
 class NN(object):
 	'''
@@ -36,7 +40,7 @@ class NN(object):
 
 		model = Model(inputs=inputs, outputs=[policy_head, value_head])
 		model.compile(
-					optimizer=SGD(lr=params['learning_rate'], momentum=params['momentum']), 
+					optimizer=SGD(lr=LEARNING_RATE, momentum=MOMENTUM), 
 					loss={'value_head': 'mean_squared_logarithmic_error', 'policy_head': 'categorical_crossentropy'},
 					loss_weights={'value_head': 0.5, 'policy_head': 0.5}
 					)
@@ -48,22 +52,25 @@ class NN(object):
 		data = np.array([d[:-1].reshape(self.input_shape) for d in data])
 		self.model.fit(data, labels, epochs=epochs, batch_size=batch_size)
 
+
 	def evaluate(self, x, y, batch_size):
 		data = np.array([d[:-1].reshape(self.input_shape) for d in x])
 		return self.model.evaluate(data, y, batch_size=batch_size)
+
 
 	def predict(self, data):
 		shape = np.insert(self.input_shape, 0, 1)
 		return self.model.predict(data[:-1].reshape(shape))
 
-	def model_base(self, inputs):
-		x = self.conv_layer(inputs, params['base_layers'][0]['filters'], params['base_layers'][0]['kernel_size'])
 
-		for i in range(1,len(params['base_layers']) - 1):
-			x = self.res_layer(x, params['base_layers'][i]['filters'], 
-								params['base_layers'][i]['kernel_size'])
+	def model_base(self, inputs):
+		x = self.conv_layer(inputs, BASE_LAYERS[0]['filters'], BASE_LAYERS[0]['kernel_size'])
+
+		for i in range(1,len(BASE_LAYERS) - 1):
+			x = self.res_layer(x, BASE_LAYERS[i]['filters'], BASE_LAYERS[i]['kernel_size'])
 
 		return x
+
 
 	def policy_head(self, x):
 		'''
@@ -76,11 +83,12 @@ class NN(object):
 					42, 
 					use_bias=False, 
 					activation='linear', 
-					kernel_regularizer=regularizers.l2(params['reg_const']),
+					kernel_regularizer=regularizers.l2(REG_CONST),
 					name='policy_head'
 					)(p)
 
 		return p
+
 
 	def value_head(self, x):
 		'''
@@ -93,14 +101,14 @@ class NN(object):
 					20, 
 					use_bias=False, 
 					activation='linear', 
-					kernel_regularizer=regularizers.l2(params['reg_const'])
+					kernel_regularizer=regularizers.l2(REG_CONST)
 					)(v)
 		v = LeakyReLU()(v)
 		v = Dense(
 					1, 
 					use_bias=False, 
 					activation='tanh', 
-					kernel_regularizer=regularizers.l2(params['reg_const']),
+					kernel_regularizer=regularizers.l2(REG_CONST),
 					name='value_head'
 					)(v)
 
@@ -114,10 +122,10 @@ class NN(object):
 			filters=filters, # integer, "dimensionality of the output space"
 			kernel_size=kernel_size, # integer or tuple/list of 2 ints,height and width of window
 			padding='same',
-			data_format='channels_first',
+			data_format='channels_last',
 			use_bias='False',
 			activation='linear',
-			kernel_regularizer=regularizers.l2(params['reg_const']),
+			kernel_regularizer=regularizers.l2(REG_CONST),
 			)(model)
 
 		model = BatchNormalization(axis=1)(model)
@@ -132,10 +140,10 @@ class NN(object):
 			filters=filters, # integer, "dimensionality of the output space"
 			kernel_size=kernel_size, # integer or tuple/list of 2 ints,height and width of window
 			padding='same',
-			data_format='channels_first',
+			data_format='channels_last',
 			use_bias='False',
 			activation='linear',
-			kernel_regularizer=regularizers.l2(params['reg_const']),
+			kernel_regularizer=regularizers.l2(REG_CONST),
 			)(x)
 
 		x = BatchNormalization(axis=1)(x)
@@ -143,11 +151,10 @@ class NN(object):
 
 		return x
 
+
 	def load_model(self, path):
 		self.model = load_model(path)
 
+
 	def save_model(self, path):
-		self.model.save(path)
-
-
-		
+		self.model.save(path)	

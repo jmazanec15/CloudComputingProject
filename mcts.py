@@ -1,5 +1,5 @@
 import numpy as np
-from params import params
+from params import *
 '''
 	Monte Carlo Tree Search class
 	This class is used to execute the MCTS when searching
@@ -160,8 +160,8 @@ class MCTS(object):
 		# Add randomness here so that an NN playing against it self doesnt generate the 
 		# same states
 		if randomness:
-			epsilon = params['epsilon']
-			nu = np.random.dirichlet([params['alpha']] * len(node.edges)) 
+			epsilon = EPSILON
+			nu = np.random.dirichlet([ALPHA] * len(node.edges)) 
 		else:
 			epsilon = 0
 			nu = [0] * len(node.edges)

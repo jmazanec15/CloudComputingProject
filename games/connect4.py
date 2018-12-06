@@ -6,6 +6,7 @@
 
 import copy
 import numpy as np
+from params import *
 
 class Connect4(object):
 	def __init__(self):
@@ -52,9 +53,8 @@ class Connect4(object):
 			35 36 37 38 39 40 41
 
 		'''
-		state = np.array([0 for _ in range(self.size + 1)])
-		state[self.size] = 1 # set turn to 1: black
-		return state
+		state = np.zeros(INPUT_SHAPE)
+		return state, 1
 
 	def getValidActions(self, s):
 		'''
@@ -129,3 +129,4 @@ class Connect4(object):
 				s_id += '0'
 
 		return s_id
+

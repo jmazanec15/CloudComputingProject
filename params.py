@@ -1,30 +1,35 @@
 '''
-	Set the values of the neural network here
+	set all params here
 '''
 
-params = dict()
+## Neural Network Params
+REG_CONST = 0.0001
+LEARNING_RATE = .1
+MOMENTUM = 0.9
 
-params['reg_const'] = 0.0001
-params['learning_rate'] = .1
-params['momentum'] = 0.9
-
-## For randomness
-params['epsilon'] = 0.2
-params['alpha'] = 0.8
-
-params['base_layers'] = [
-							{'filters': 75, 'kernel_size': 4},
-							{'filters': 75, 'kernel_size': 4},
-							{'filters': 75, 'kernel_size': 4}
-						]
+BASE_LAYERS = [ {'filters': 75, 'kernel_size': 4},
+				{'filters': 75, 'kernel_size': 4},
+				{'filters': 75, 'kernel_size': 4}]
 
 
-## Should have epochs, batch size, ...
-# input_shape = (6, 7)
-# iterations = 10
-# games_per_iter = 25
-# head_to_head_games = 100
-# threshold = 0.55
-# cpuct = 1
-# epochs = 10
-# batch_size = 64
+EPSILON = 0.2 # For randomness
+ALPHA = 0.8 # For randomness
+
+CPUCT = 1
+EPOCHS = 2	# 10
+BATCH_SIZE = 64
+TRAINING_SIZE = 10000
+
+INPUT_SHAPE = (6, 7, 1)
+ITERATIONS = 10
+GAMES_PER_ITERATION = 100	# 100
+H2H_GAMES = 5	# 50
+NET_THRESHOLD = 0.55
+
+MAX_SIZE_OF_DATASET = 5000000
+
+## Condor Params
+GAMES_PER_TASK = 5
+WORKERS = 0
+PORT = 9146
+USERNAME = 'jmazane1'

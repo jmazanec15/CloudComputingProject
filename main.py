@@ -3,199 +3,129 @@
 
 import numpy as np
 import subprocess
+import sys
 import time
+if len(sys.argv) > 1 and sys.argv[1] == 'condor':
+	from condor_workers import workers
 
-from work_queue import *
+from agent import ComputerAgent
 from games.connect4 import Connect4
 from nn import NN
-from agent import ComputerAgent, HumanAgent
-
-from work_queue import *
-
-def workers(games_per_task, games_per_iter):
-	port = 9139
-
-	keras_path = "/afs/crc.nd.edu/user/l/lwurl/.local/lib/python2.7/site-packages/keras"
-	h5py_path = "/afs/crc.nd.edu/user/l/lwurl/.local/lib/python2.7/site-packages/h5py"
-	keras_applications_path = "/afs/crc.nd.edu/user/l/lwurl/.local/lib/python2.7/site-packages/keras_applications"
-	keras_preprocessing_path = "/afs/crc.nd.edu/user/l/lwurl/.local/lib/python2.7/site-packages/keras_preprocessing"
-	yaml_path = "/afs/crc.nd.edu/user/l/lwurl/.local/lib/python2.7/site-packages/yaml"
-	numpy_path = "/afs/crc.nd.edu/x86_64_linux/t/tensorflow/1.6/gcc/python2/build/lib/python2.7/site-packages/numpy"
-	script_path = "/afs/crc.nd.edu/user/l/lwurl/Cloud/script.sh"
-	cloud_path = "/afs/crc.nd.edu/user/l/lwurl/Cloud"
-
-	try:
-		q = WorkQueue(port)
-	except:
-		sys.exit(1)
-
-	print "listening on port %d..." % q.port
-
-	for i in range(games_per_iter/games_per_task):
-		train_file = 'training_examples' + str(i) + '.npy'
-		policies_file = 'policies' + str(i) + '.npy'
-		values_file = 'values' + str(i) + '.npy'
-		outfile = "errors.txt"
-
-		command = "./script.sh " + str(games_per_task) + " " + str(i) + " >> %s 2>&1" % (outfile)
-
-		t = Task(command)
-
-		t.specify_file(keras_path, "keras", WORK_QUEUE_INPUT, cache=True)
-		t.specify_file(h5py_path, "h5py", WORK_QUEUE_INPUT, cache=True)
-		t.specify_file(cloud_path, "cloud", WORK_QUEUE_INPUT, cache=True)
-		t.specify_file(keras_applications_path, "keras_applications", WORK_QUEUE_INPUT, cache=True)
-		t.specify_file(keras_preprocessing_path, "keras_preprocessing", WORK_QUEUE_INPUT, cache=True)
-		t.specify_file(yaml_path, "yaml", WORK_QUEUE_INPUT, cache=True)
-		t.specify_file(numpy_path, "numpy", WORK_QUEUE_INPUT, cache=True)
-		t.specify_file(script_path, "script.sh", WORK_QUEUE_INPUT, cache=True)
-		
-		t.specify_file(train_file, train_file, WORK_QUEUE_OUTPUT, cache=False)
-		t.specify_file(policies_file, policies_file, WORK_QUEUE_OUTPUT, cache=False)
-		t.specify_file(values_file, values_file, WORK_QUEUE_OUTPUT, cache=False)
-		t.specify_file(outfile, outfile, WORK_QUEUE_OUTPUT, cache=False)
-
-		# Once all files has been specified, we are ready to submit the task to the queue.
-		taskid = q.submit(t)
-		print "submitted task (id# %d): %s" % (taskid, t.command)
-
-	print "waiting for tasks to complete..."
-	while not q.empty():
-		t = q.wait(5)
-		if t:
-			print "task (id# %d) complete: %s (return code %d)" % (t.id, t.command, t.return_status)
-			if t.return_status != 0:
-				i = t.id - 1
-				train_file = 'training_examples' + str(i) + '.npy'
-				policies_file = 'policies' + str(i) + '.npy'
-				values_file = 'values' + str(i) + '.npy'
-				outfile = "errors.txt"
-
-				command = "./script.sh " + str(games_per_task) + " " + str(i) + " >> %s 2>&1" % (outfile)
-
-				t = Task(command)
-
-				t.specify_file(keras_path, "keras", WORK_QUEUE_INPUT, cache=True)
-				t.specify_file(h5py_path, "h5py", WORK_QUEUE_INPUT, cache=True)
-				t.specify_file(cloud_path, "cloud", WORK_QUEUE_INPUT, cache=True)
-				t.specify_file(keras_applications_path, "keras_applications", WORK_QUEUE_INPUT, cache=True)
-				t.specify_file(keras_preprocessing_path, "keras_preprocessing", WORK_QUEUE_INPUT, cache=True)
-				t.specify_file(yaml_path, "yaml", WORK_QUEUE_INPUT, cache=True)
-				t.specify_file(numpy_path, "numpy", WORK_QUEUE_INPUT, cache=True)
-				t.specify_file(script_path, "script.sh", WORK_QUEUE_INPUT, cache=True)
-				
-				t.specify_file(train_file, train_file, WORK_QUEUE_OUTPUT, cache=False)
-				t.specify_file(policies_file, policies_file, WORK_QUEUE_OUTPUT, cache=False)
-				t.specify_file(values_file, values_file, WORK_QUEUE_OUTPUT, cache=False)
-				t.specify_file(outfile, outfile, WORK_QUEUE_OUTPUT, cache=False)
-
-				# Once all files has been specified, we are ready to submit the task to the queue.
-				taskid = q.submit(t)
-				print "REsubmitted task (id# %d): %s" % (taskid, t.command)
-				#task object will be garbage collected by Python automatically when it goes out of scope
-
-	print "all tasks complete!"
-
-	#work queue object will be garbage collected by Python automatically when it goes out of scope
-	
-	return "ok"
+from params import *
 
 def main():
 	'''
 		This function should generate a trained model that will allow us
 		to play the games
 	'''
-	### Parameters
-	input_shape = (6, 7, 1)
-	iterations = 10
-	games_per_iter = 1000	# 100
-	head_to_head_games = 5	# 50
-	threshold = 0.55
-	cpuct = 1
-	epochs = 2	# 10
-	batch_size = 64
-	training_size = 10000
+	## specifiy condor to train on condor
+	use_condor = True if len(sys.argv) > 1 and sys.argv[1] == 'condor' else False
 
-	### Setup variables
-	nn = NN(input_shape)
+	## Setup variables
+	curr_nn = NN(INPUT_SHAPE)
+	best_nn = curr_nn
 	game = Connect4()
 	training_examples = np.array([])
-	policies = list()
-	values = list()
+	policies = np.array([])
+	values = np.array([])
 
-	games_per_task = 5
+	## Time per X games played in 1 iteration
+	if use_condor:
+		result_file = open('results/workqueue_{}_games_per_iter_{}_workers_{}_games_per_task.csv'.format(GAMES_PER_ITERATION, WORKERS, GAMES_PER_TASK), "a")
+	else:
+		result_file = open('results/single_{}_games_per_iter_{}_workers_{}_games_per_task.csv'.format(GAMES_PER_ITERATION, WORKERS, GAMES_PER_TASK), "a")
 
-	f = open("{}_games_per_iter_100workers_{}_games_per_task.csv".format(games_per_iter, games_per_task), "a")
-
-	for it in range(iterations):
-		print("ITERATION: {}/{}".format(it+1, iterations))
+	for it in range(ITERATIONS):
+		print('ITERATION: {}/{}\nSelf playing {} games'.format(it+1, ITERATIONS, GAMES_PER_ITERATION))
 		
-		### Self playing to accumulate training examples
-		print("Self playing {} games".format(games_per_iter))
+		## Self play section
+		ti = time.time() # Take the time to play X games
+		if use_condor:
+			new_examples, ps, vs = selfPlayCondor(game, best_nn, CPUCT, GAMES_PER_ITERATION, GAMES_PER_TASK, MAX_SIZE_OF_DATASET)
+		else:
+			new_examples, ps, vs = selfPlaySingle(game, best_nn, CPUCT, GAMES_PER_ITERATION, MAX_SIZE_OF_DATASET)
 
-		ti = time.time()
+		tf = time.time() # Record time
+		result_file.write('{}\n'.format(tf-ti))
 
-		workers(games_per_task, games_per_iter)
-		for i in range(games_per_iter/games_per_task):
-			train_file = 'training_examples' + str(i) + '.npy'
-			policies_file = 'policies' + str(i) + '.npy'
-			values_file = 'values' + str(i) + '.npy'
-			new_examples = np.load(train_file)
-			ps = np.load(policies_file)
-			vs = np.load(values_file)
-			if len(training_examples) != 0:
-				training_examples = np.append(training_examples, new_examples, axis=0)
-				policies = np.append(policies, ps, axis=0)
-				values = np.append(values, vs, axis=0)
-			else:	
-				training_examples = new_examples
-				policies = ps
-				values = vs
+		if len(training_examples) != 0:
+			training_examples = np.append(training_examples, new_examples, axis=0)
+			policies = np.append(policies, ps, axis=0)
+			values = np.append(values, vs, axis=0)
+		else:	
+			training_examples = new_examples
+			policies = ps
+			values = vs
 
-		tf = time.time()
-
-		it_time = tf-ti
-		f.write(str(it_time))
-		f.write('\n')
-
-		### Train new neural net with random assortment of new examples
+		## Train network
 		print("Training...")
-		new_nn = NN(input_shape)
-
-		### Take random subset of the data for training
-		size = min(len(training_examples), training_size)
+		size = min(len(training_examples), TRAINING_SIZE)
 		indices = np.random.choice(range(len(training_examples)), size=size, replace=False)
 		ex_subset = training_examples[indices,:]
 		p_subset = policies[indices]
 		v_subset = values[indices]
+		curr_nn.fit(ex_subset, [p_subset, v_subset], EPOCHS, BATCH_SIZE)
 
-		### Train the new neural network
-		new_nn.fit(ex_subset, [p_subset, v_subset], epochs, batch_size)
-
-		### Have the nets play each other and the best one survives
+		## Have the curr_net and best_net play to survive
 		print("Head to head...")
 		wins = 0
-		for g in range(head_to_head_games):
-			if playGameNN1VsNN2(game, nn, new_nn, cpuct) > 0:
+		for g in range(H2H_GAMES):
+			if playGameNN1VsNN2(game, best_nn, curr_nn, CPUCT) > 0:
 				wins+=1
 		
-		if wins/float(head_to_head_games) >= threshold:
-			nn = new_nn
+		if wins/float(H2H_GAMES) >= NET_THRESHOLD:
+			best_nn = curr_nn
 
-	playGameHumanVsComp(game, nn, cpuct)
+	## Save the best model
+	best_nn.save_model('./models/{}_games_per_iter_{}_workers_{}_games_per_task.h5'.format(GAMES_PER_ITERATION, WORKERS, GAMES_PER_TASK))
 
-	nn.save_model('./models/v1.h5')
+def selfPlaySingle(game, best_nn, cpuct, games_per_iteration, max_size_of_dataset):
+	training_examples = np.array([])
+	policies = np.array([])
+	values = np.array([])
+	for g in range(games_per_iteration):
+		new_examples, ps, vs = playGameSelfVsSelf(game, best_nn, cpuct)
+		if len(training_examples) != 0:
+			training_examples = np.append(training_examples, new_examples, axis=0)
+			policies = np.append(policies, ps, axis=0)
+			values = np.append(values, vs, axis=0)
+		else:	
+			training_examples = new_examples
+			policies = ps
+			values = vs
+	return training_examples, policies, values
 
+def selfPlayCondor(game, best_nn, cpuct, games_per_iteration, games_per_task, max_size_of_dataset):
+	training_examples = np.array([])
+	policies = np.array([])
+	values = np.array([])
+	workers(games_per_iteration, games_per_task)
+	for i in range(games_per_iteration/games_per_task):
+		# Names of files
+		train_file = 'game_data/training_examples{}.npy'.format(i)
+		policies_file = 'game_data/policies{}.npy'.format(i)
+		values_file = 'game_data/values{}.npy'.format(i)
 
-def playGameHumanVsComp(game, nn, cpuct, first=True):
-	if first:
-		a1 = ComputerAgent(game, cpuct, nn)
-		a2 = HumanAgent(game)
-	else:
-		a1 = HumanAgent(game)
-		a2 = ComputerAgent(game, cpuct, nn)
+		# Load in the examples the workers completed
+		new_examples = np.load(train_file)
+		ps = np.load(policies_file)
+		vs = np.load(values_file)
 
-	return playGame(game, a1, a2)
+		# Dont let np array get bigger than max_size_of_dataset
+		if len(training_examples) + len(new_examples) > max_size_of_dataset:
+			r = len(training_examples) + len(new_examples) - max_size_of_dataset
+			training_examples = training_examples[r:]
+
+		if len(training_examples) != 0:
+			training_examples = np.append(training_examples, new_examples, axis=0)
+			policies = np.append(policies, ps, axis=0)
+			values = np.append(values, vs, axis=0)
+		else:	
+			training_examples = new_examples
+			policies = ps
+			values = vs
+
+	return training_examples, policies, values
 
 def playGameSelfVsSelf(game, nn, cpuct, first=True):
 	'''
@@ -215,7 +145,7 @@ def playGameNN1VsNN2(game, nn1, nn2, cpuct, first=True):
 		a1 = ComputerAgent(game, cpuct, nn2)
 		a2 = ComputerAgent(game, cpuct, nn1)
 
-	return playGame(game, a1, a2, output=False)
+	return playGame(game, a1, a2)
 
 
 def playGameSim(game, a1, a2):
@@ -249,17 +179,12 @@ def playGameSim(game, a1, a2):
 	return np.array(examples), np.array(ps), np.array(vs)
 
 
-def playGame(game, a1, a2, output=True):
+def playGame(game, a1, a2):
 	s = game.startState()
-
 	a1_turn = True
-
 	winner = game.gameOver(s)
 
 	while not winner:
-		if output:
-			game.printState(s)
-			print('\n**************')
 		if a1_turn:
 			a = a1.getMove(s)
 			a1_turn = False
@@ -270,49 +195,8 @@ def playGame(game, a1, a2, output=True):
 			break
 		s = game.nextState(s, a)
 		winner = game.gameOver(s)
-	
-	if output:
-		game.printState(s)
-		print("Winner: {}".format(winner))
 
 	return winner
-
-def test_game(game):
-	s = game.startState()
-	while True:
-		a = game.getValidActions(s)
-		s = game.nextState(s, a[0])
-		game.printState(s)
-		print('')
-		t = game.gameOver(s)
-		if t:
-			print("{} wins".format(t))
-			break
-
-	print(s)
-
-
-def test_net(nn):
-	## Init variables
-	batch_size = 128
-	epochs = 10
-
-	## Create dumby data
-	x_train = np.random.randint(high=1, low=-1, size=(1000,nn.input_shape[0]))
-	y_train_p = np.random.randint(10, size=(1000, 42))
-	y_train_v = np.random.randint(10, size=(1000, 1))
-	
-	x_test = np.random.randint(high=1, low=-1, size=(100,nn.input_shape[0]))
-	y_test_p = np.random.randint(10, size=(100, 42))
-	y_test_v = np.random.randint(10, size=(100, 1))
-
-	## Train model
-	nn.fit(x_train, [y_train_p, y_train_v], epochs, batch_size)
-
-	## Test model
-	score = nn.evaluate(x_test, [y_test_p, y_test_v], batch_size)
-	print("Score: {}".format(score))
-
 
 if __name__ == "__main__":
 	main()
