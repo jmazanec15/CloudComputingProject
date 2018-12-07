@@ -1,8 +1,10 @@
 # CloudComputingProject
-Final Project for Cloud Computing. This is a simple model implementation of AlphaZero. It uses HTCondor to parallelize the process of the neural net playing games vs itself.
+Final Project for Cloud Computing. This is a simple model implementation of AlphaZero. It uses WorkQueue and HTCondor to parallelize the process of the neural net playing games vs itself.
 
+
+## Running with WorkQueue
 To run:
-- Make sure you are runnning this on machine `crcfe02.crc.nd.edu`
+- Make sure you are runnning this on `crcfe02.crc.nd.edu`
 - Make sure that the most up to date cctools has been installed on your machine. If not, run:
 ```
 cd $HOME
@@ -14,22 +16,23 @@ make
 make install
 cd $HOME
 ```
-- Make sure that you have pip installed and add `export PATH=/afs/crc.nd.edu/user/$USERNAME[0]$/$USERNAME$/.local/bin:$PATH` to your PATH
-- Use `python -m pip install ___ --user` to install necessary libraries such as `numpy`, `keras`, `keras_applications`, `keras_preprocessing`, `pyyaml`, `h5py`, and `tensorflow`
-
-For running the distributed version:
-- Use `python -m pip install ___ --user` to install necessary libraries such as `numpy`, `keras`, and `tensorflow`
-- Run the commands found in the file `Path.txt` in the terminal
+- Make sure that you have pip installed
+- Run `export PATH=/afs/crc.nd.edu/user/$USERNAME[0]$/$USERNAME$/.local/bin:$PATH`
+- Use `python -m pip install ___ --user` to install the necessary libraries: `numpy`, `keras`, `keras_applications`, `keras_preprocessing`, `pyyaml`, `h5py`, and `tensorflow`
+- Run the commands found in the file `Path.txt` from the repository in the terminal
 - Use the command `condor_submit_workers crcfe02.crc.nd.edu PORT NUM_WORKERS` to submit `NUM_WORKERS` workers to HTCondor
-- Ensure that the `PORT` matches the port number specified in in `params.py`
-- Ensure that the paths specified in `condor_workers.py` are where the different libraries and files are located on your machine (they are specified twice)
+- Ensure that the `PORT` matches the port number specified in `params.py`
+- Ensure that the paths specified in `condor_workers.py` are where the different libraries and files are located on your machine
 - Set parameters in `params.py`
-- Run `./main.py condor` to run
+- Run `./main.py condor`
 
-For running on a single machine:
+## Running on a single machine
 - Set parameters in `params.py`
-- Run `./main.py` to run
+- Run `python main.py` 
 
-AlphaZero implementation based on repositories found here:
-- https://github.com/AppliedDataSciencePartners/DeepReinforcementLearning
-- https://github.com/suragnair/alpha-zero-general
+## Results
+The newly trained model will be stored in the models folder. The best model is saved there after every iteration is complete so if the program needs to be terminated in the middle of the execution, the model can be saved.
+
+AlphaZero implementation based on these two tutorials:
+- https://medium.com/applied-data-science/how-to-build-your-own-alphazero-ai-using-python-and-keras-7f664945c188
+- https://web.stanford.edu/~surag/posts/alphazero.html
