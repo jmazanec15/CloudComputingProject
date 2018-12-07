@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import numpy as np
+import sys
 
 from games.connect4 import Connect4
 from nn import NN
@@ -21,7 +22,7 @@ def main():
 					  '''
 	print('Instructions:\nEnter Integer of the square to be played\n{}'.format(board_positions))
 
-	nn = NN((6,7,2), path_to_nn="tournament_models/250.h5", load=True)
+	nn = NN((6,7,2), path_to_nn=sys.argv[1], load=True)
 	game = Connect4()
 	playGameHumanVsComp(game, nn, 1)	
 
