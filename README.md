@@ -33,6 +33,21 @@ cd $HOME
 ## Results
 The newly trained model will be stored in the models folder. The best model is saved there after every iteration is complete so if the program needs to be terminated in the middle of the execution, the model can be saved.
 
+## Play against a model
+- Run `python playGame.py PATH_TO_MODEL_H5`
+- Enter the integer value of a square to make a move. The board is setup like this:
+
+	 0  1  2  3  4  5  6
+	 7  8  9 10 11 12 13
+	14 15 16 17 18 19 20
+	21 22 23 24 25 26 27
+	28 29 30 31 32 33 34
+	35 36 37 38 39 40 41
+
+## Play models head to head
+- Run `python playGameNNVsNN.py.py PATH_TO_MODEL1_H5 PATH_TO_MODEL2_H5`
+- It will play 100 games, alternating which model goes first
+
 ## References
 This project was based off of these two tutorials for AlphaZero:
 - https://medium.com/applied-data-science/how-to-build-your-own-alphazero-ai-using-python-and-keras-7f664945c188
