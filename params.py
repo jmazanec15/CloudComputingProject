@@ -16,7 +16,7 @@ EPSILON = 0.2 # For randomness
 ALPHA = 0.8 # For randomness
 
 CPUCT = 1
-EPOCHS = 2
+EPOCHS = 50
 BATCH_SIZE = 64
 TRAINING_SIZE =  10000 #15000
 
