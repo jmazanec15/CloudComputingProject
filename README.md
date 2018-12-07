@@ -21,6 +21,7 @@ cd $HOME
 ```
 - Make sure that you have pip installed and add `export PATH=/afs/crc.nd.edu/user/$USERNAME[0]$/$USERNAME$/.local/bin:$PATH` to your PATH
 - Use `python -m pip install ___ --user` to install necessary libraries such as `numpy`, `keras`, `keras_applications`, `keras_preprocessing`, `pyyaml`, `h5py`, and `tensorflow`
+
 For running the distributed version:
 - Use `python -m pip install ___ --user` to install necessary libraries such as `numpy`, `keras`, and `tensorflow`
 - Run the commands found in the file `Path.txt` in the terminal
@@ -29,6 +30,7 @@ For running the distributed version:
 - Ensure that the paths specified in `condor_workers.py` are where the different libraries and files are located on your machine (they are specified twice)
 - Set parameters in `params.py`
 - Run `./main.py condor` to run
+
 For running on a single machine:
 - Set parameters in `params.py`
 - Run `./main.py` to run
