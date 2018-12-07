@@ -116,11 +116,6 @@ class MCTS(object):
 		if not max_edge:
 			v = leaf_node.v
 		else:
-			# print("++++++++++++++++")
-			# self.game.printState(max_edge.in_state)
-			# print("\n")
-			# self.game.printState(max_edge.out_state)
-			# print("++++++++++++++++")
 			new_node = Node(max_edge.out_state)
 			self._addNode(new_node)
 			new_node.v = self._initEdges(new_node)
