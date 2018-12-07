@@ -1,5 +1,5 @@
-# CloudComputingProject
-Final Project for Cloud Computing. This is a simple model implementation of AlphaZero. It uses WorkQueue and HTCondor to parallelize the process of the neural net playing games vs itself.
+# Cloud Computing Project
+Final Project for Cloud Computing. This is a simple implementation of AlphaZero. It uses WorkQueue and HTCondor to parallelize the process of the neural net playing games vs itself.
 
 
 ## Running with WorkQueue
@@ -33,6 +33,7 @@ cd $HOME
 ## Results
 The newly trained model will be stored in the models folder. The best model is saved there after every iteration is complete so if the program needs to be terminated in the middle of the execution, the model can be saved.
 
-AlphaZero implementation based on these two tutorials:
+## References
+This project was based off of these two tutorials for AlphaZero:
 - https://medium.com/applied-data-science/how-to-build-your-own-alphazero-ai-using-python-and-keras-7f664945c188
 - https://web.stanford.edu/~surag/posts/alphazero.html
