@@ -37,5 +37,6 @@ The newly trained model will be stored in the models folder. The best model is s
 This project was based off of these two tutorials for AlphaZero:
 - https://medium.com/applied-data-science/how-to-build-your-own-alphazero-ai-using-python-and-keras-7f664945c188
 - https://web.stanford.edu/~surag/posts/alphazero.html
+
 Also, here is a link to more information about AlphaZero from Deepmind's website
 - https://deepmind.com/blog/alphazero-shedding-new-light-grand-games-chess-shogi-and-go/
