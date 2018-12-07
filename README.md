@@ -1,3 +1,8 @@
+
+Luke Wurl <lwurl@nd.edu>
+1:10 AM (7 minutes ago)
+to John
+
 # CloudComputingProject
 Final Project for Cloud Computing. This is a simple model implementation of AlphaZero. It uses HTCondor to parallelize the process of the neural net playing games vs itself.
 
