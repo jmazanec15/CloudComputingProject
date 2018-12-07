@@ -29,3 +29,7 @@ For running the distributed version:
 For running on a single machine:
 - Set parameters in `params.py`
 - Run `./main.py` to run
+
+AlphaZero implementation based on repositories found here:
+https://github.com/AppliedDataSciencePartners/DeepReinforcementLearning
+https://github.com/suragnair/alpha-zero-general
